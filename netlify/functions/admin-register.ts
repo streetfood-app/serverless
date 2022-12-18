@@ -13,7 +13,19 @@ const handler: Handler = async (
   event: HandlerEvent,
   context: HandlerContext
 ) => {
-  const { body } = event;
+  const { body, headers } = event;
+
+  if (
+    !headers["x-streetfood-secret-key"] ||
+    headers["x-streetfood-secret-key"] != "mystreetfoodsecretkey"
+  ) {
+    return {
+      statusCode: 403,
+      body: JSON.stringify({
+        message: "'x-streetfood-secret-key' is missing or value is invalid",
+      }),
+    };
+  }
   const input: AdminRegisterInput = JSON.parse(body!).input.admin;
   const sdk = getSdk(new GraphQLClient("http://localhost:8080/v1/graphql"));
 
@@ -31,7 +43,7 @@ const handler: Handler = async (
       "https://hasura.io/jwt/claims": {
         "x-hasura-allowed-roles": ["admin"],
         "x-hasura-default-role": "admin",
-        "x-hasura-user-id": data.insert_admin?.returning[0].id,
+        "x-hasura-user-id": data.insert_admin_one?.id,
       },
     },
     "mygreatjwtsecret"
